@@ -1,8 +1,7 @@
-from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
-load_dotenv()
+from .s3 import S3
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
@@ -21,8 +20,17 @@ async def main():
                     Hey yo! This is the Elm Annotator Backend.
                 </h1>
                 <p>There is nothing to show here, this is just the root of the API.</p>
-                <img src="/public/404.gif" alt="404" />
             </div>
         </body>
     </html>
         """)
+
+
+@app.get("/samples", tags=["Data samples"])
+async def list_observation_sets(
+    path: str = None,
+    only_folders: bool = True,
+):
+    """List all data samples in the bucket or in a specific path"""
+    s3 = S3(path=path)
+    return {"data": s3.list_files(only_folders=only_folders)}
