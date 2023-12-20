@@ -1,10 +1,14 @@
+import json
 import os
+from typing import List
 
 import boto3
 from dotenv import load_dotenv
 from fastapi import HTTPException
 
 load_dotenv()
+
+IMAGE_EXTENSIONS = ["jpg", "jpeg", "png"]
 
 
 class S3:
@@ -59,3 +63,39 @@ class S3:
             content["Key"].replace(prefix, "")
             for content in response_iterator.search("Contents")
         ]
+
+    def get_file_content(self, fname: str,
+                         authorized_extensions: List[str]) -> str:
+        """Get the content of a file"""
+        file_extension = fname.split(".")[-1].lower()
+
+        if file_extension not in authorized_extensions:
+            raise HTTPException(
+                status_code=400,
+                detail=
+                f"File extension not supported: `{file_extension}`. Authorized extensions: {authorized_extensions}",
+            )
+
+        try:
+            response = self.client.get_object(Bucket=self.bucket_name,
+                                              Key=self.path + fname)
+        except self.client.exceptions.NoSuchKey:
+            raise HTTPException(
+                status_code=404,
+                detail="File not found",
+            )
+
+        if file_extension == "json":
+            return json.loads(response["Body"].read().decode("utf-8"))
+
+        if file_extension in IMAGE_EXTENSIONS:
+            image_bytes = response["Body"].read()
+            media_type = f"image/{file_extension}"
+
+            return image_bytes, media_type
+
+        raise HTTPException(
+            status_code=400,
+            detail=
+            f"File extension not supported: {file_extension}. Authorized extensions: {authorized_extensions}",
+        )

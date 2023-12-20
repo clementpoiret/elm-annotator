@@ -5,13 +5,13 @@ meta {
 }
 
 get {
-  url: {{backendUrl}}/samples?path=/&only_folders=true
+  url: {{backendUrl}}/samples?path={{process.env.SAMPLES_PATH}}&only_folders=true
   body: none
   auth: none
 }
 
 query {
-  path: /
+  path: {{process.env.SAMPLES_PATH}}
   only_folders: true
 }
 

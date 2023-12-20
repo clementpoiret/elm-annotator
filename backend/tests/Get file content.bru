@@ -1,0 +1,16 @@
+meta {
+  name: Get file content
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{backendUrl}}/file?path={{process.env.FILE_PATH}}&fname={{process.env.JSON_FNAME}}
+  body: none
+  auth: none
+}
+
+query {
+  path: {{process.env.FILE_PATH}}
+  fname: {{process.env.JSON_FNAME}}
+}

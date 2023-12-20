@@ -1,9 +1,13 @@
+from typing import Optional
+
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 
 from .s3 import S3
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+
+IMAGE_EXTENSIONS = ["jpg", "jpeg", "png"]
 
 
 @app.get("/", tags=["Root"])
@@ -26,11 +30,45 @@ async def main():
         """)
 
 
-@app.get("/samples", tags=["Data samples"])
+@app.get("/samples")
 async def list_observation_sets(
-    path: str = None,
-    only_folders: bool = True,
+    path: Optional[str] = None,
+    only_folders: Optional[bool] = True,
 ):
     """List all data samples in the bucket or in a specific path"""
     s3 = S3(path=path)
     return {"data": s3.list_files(only_folders=only_folders)}
+
+
+@app.get("/file")
+async def get_file_content(
+    path: Optional[str] = None,
+    fname: Optional[str] = None,
+):
+    """Get the content of a file"""
+    s3 = S3(path=path)
+    return {
+        "data": s3.get_file_content(fname=fname, authorized_extensions=["json"])
+    }
+
+
+@app.get(
+    "/image",
+    responses={200: {
+        "content": {
+            "image/png": {}
+        }
+    }},
+    response_class=Response,
+)
+async def get_image_content(
+    path: Optional[str] = None,
+    fname: Optional[str] = None,
+):
+    """Get the content of a file"""
+    s3 = S3(path=path)
+
+    image_bytes, media_type = s3.get_file_content(
+        fname=fname, authorized_extensions=IMAGE_EXTENSIONS)
+
+    return Response(content=image_bytes, media_type=media_type)

@@ -1,0 +1,20 @@
+meta {
+  name: List sample files
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{backendUrl}}/samples?path=data.old/202349/images/justin.thomas@fringuant.com/data.old20231207100541/&only_folders=false
+  body: none
+  auth: none
+}
+
+query {
+  path: data.old/202349/images/justin.thomas@fringuant.com/data.old20231207100541/
+  only_folders: false
+}
+
+assert {
+  res.status: eq 200
+}

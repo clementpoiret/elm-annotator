@@ -1,0 +1,16 @@
+meta {
+  name: Get image content
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{backendUrl}}/image?path={{process.env.IMAGE_PATH}}&fname={{process.env.IMAGE_FNAME}}
+  body: none
+  auth: none
+}
+
+query {
+  path: {{process.env.IMAGE_PATH}}
+  fname: {{process.env.IMAGE_FNAME}}
+}
