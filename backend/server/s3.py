@@ -2,6 +2,7 @@ import os
 
 import boto3
 from dotenv import load_dotenv
+from fastapi import HTTPException
 
 load_dotenv()
 
@@ -12,6 +13,9 @@ class S3:
     def __init__(self, path):
         self.bucket_name = os.getenv("AWS_BUCKET_NAME")
         self.path = path
+
+        if path and not path.endswith("/"):
+            self.path += "/"
 
         self.client = boto3.client(
             "s3",
@@ -24,20 +28,34 @@ class S3:
     def list_files(self, only_folders: bool = False) -> list:
         """List all files in the bucket or in a specific path"""
         paginator = self.client.get_paginator("list_objects_v2")
+        prefix = self.path if self.path else ""
 
         if only_folders:
-            prefix = self.path if self.path else ""
             response_iterator = paginator.paginate(Bucket=self.bucket_name,
                                                    Prefix=prefix,
                                                    Delimiter="/")
+
+            if next(iter(response_iterator.search("CommonPrefixes"))) is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="No folders found",
+                )
+
             return [
-                prefix["Prefix"].replace("/", "")
-                for prefix in response_iterator.search("CommonPrefixes")
+                p["Prefix"].replace(prefix, "")
+                for p in response_iterator.search("CommonPrefixes")
             ]
 
-        prefix = self.path + "/" if self.path else ""
         response_iterator = paginator.paginate(Bucket=self.bucket_name,
                                                Prefix=prefix)
+
+        if next(iter(response_iterator.search("Contents"))) is None:
+            raise HTTPException(
+                status_code=404,
+                detail="No files found",
+            )
+
         return [
-            content["Key"] for content in response_iterator.search("Contents")
+            content["Key"].replace(prefix, "")
+            for content in response_iterator.search("Contents")
         ]

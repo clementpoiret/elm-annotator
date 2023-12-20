@@ -5,9 +5,14 @@ meta {
 }
 
 get {
-  url: {{backendUrl}}/samples
+  url: {{backendUrl}}/samples?path=/&only_folders=true
   body: none
   auth: none
+}
+
+query {
+  path: /
+  only_folders: true
 }
 
 assert {
