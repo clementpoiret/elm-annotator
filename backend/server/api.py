@@ -1,13 +1,26 @@
+import os
 from typing import Optional
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response
 
 from .s3 import S3
 
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+load_dotenv()
 
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",")
 IMAGE_EXTENSIONS = ["jpg", "jpeg", "png"]
+
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 
 @app.get("/", tags=["Root"])

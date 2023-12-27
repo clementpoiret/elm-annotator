@@ -15,6 +15,10 @@ query {
   only_folders: true
 }
 
+headers {
+  Origin: localhost:5173
+}
+
 assert {
   res.status: eq 200
 }
