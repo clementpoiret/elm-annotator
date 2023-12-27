@@ -221,3 +221,4 @@ node_modules/
 # misc
 dist/
 *.local
+frontend/src/Constants.elm

@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Browser
+import Constants
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border exposing (shadow)
@@ -8,6 +9,7 @@ import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
 import Http
+import Json.Decode exposing (Decoder, field, list, string)
 
 
 
@@ -27,15 +29,15 @@ main =
 -- MODEL
 
 
-type Model
-    = Default
-    | Success String
+type alias Model =
+    { getSubjectsStatusCode : Int
+    }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Default
-    , Cmd.none
+    ( { getSubjectsStatusCode = 0 }
+    , getSamples
     )
 
 
@@ -44,14 +46,35 @@ init _ =
 
 
 type Msg
-    = Clicked
+    = GotSamples (Result Http.Error (List String))
+    | Clicked
+    | ChangeValue String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        GotSamples result ->
+            case result of
+                Ok response ->
+                    ( { model | getSubjectsStatusCode = 200 }
+                    , Cmd.none
+                    )
+
+                Err _ ->
+                    ( { model | getSubjectsStatusCode = 400 }
+                    , Cmd.none
+                    )
+
         Clicked ->
-            ( Success "Clicked", Cmd.none )
+            ( { model | getSubjectsStatusCode = 200 }
+            , Cmd.none
+            )
+
+        ChangeValue value ->
+            ( { model | getSubjectsStatusCode = 200 }
+            , Cmd.none
+            )
 
 
 
@@ -160,6 +183,27 @@ header =
         ]
 
 
+
+-- v : String
+-- v =
+--     "Hey"
+-- input =
+--     Input.text
+--         { onChange = ChangeValue
+--         , text = v
+--         , placeholder = Nothing
+--         , label = Input.labelAbove [] (text "Label")
+--         }
+-- apiKeyInput =
+--     Input.text
+--         [ padding 10
+--         , spacing 20
+--         ]
+--         { value = "Hey"
+--         , label = Input.labelAbove [] (text "Lunch")
+--         }
+
+
 sidebar : Element msg
 sidebar =
     column
@@ -180,8 +224,10 @@ sidebar =
                 , size = 0.0
                 }
             , Border.rounded 16
+            , padding 8
             ]
-            (text "")
+          <|
+            text "Sidebar"
         , el
             [ height fill
             , width fill
@@ -239,3 +285,20 @@ mainContainer =
             , button secondaryColor "Yay!"
             ]
         ]
+
+
+
+-- HTTP
+
+
+getSamples : Cmd Msg
+getSamples =
+    Http.get
+        { url = Constants.backendUrl ++ "/samples?path=" ++ Constants.samplePath ++ "&only_folders=true"
+        , expect = Http.expectJson GotSamples samplesDecoder
+        }
+
+
+samplesDecoder : Decoder (List String)
+samplesDecoder =
+    field "data" (list string)
